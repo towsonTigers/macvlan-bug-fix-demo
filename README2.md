@@ -1,14 +1,3 @@
-None selected 
-
-
-Skip to content
-Using Gmail with screen readers
-in:sent 
-
-Conversations
-42% of 15 GB used
-Terms · Privacy · Program Policies
-Last account activity: 26 minutes ago
 Details
 # Reproducing the macvlan Host-Isolation Bug
 
@@ -74,10 +63,12 @@ manager's listen endpoint in the original bug report.
 
 From a **different machine** on the same LAN, try connecting:
 ```bash
-nc -v 192.168.1.50 5000
+nc -v 192.168.234.50 5000
 ```
 Windows PowerShell:
+```bash
 Test-NetConnection -ComputerName 192.168.234.50 -Port 5000
+```
 
 This should connect successfully — mirroring the original report where the two-machine
 setup worked fine after the macvlan workaround was applied.
@@ -159,11 +150,4 @@ ip link del macvlan-shim   # if created in Step 6
 | Step 3 (cross-machine) | Working two-machine case |
 | Step 4 (host → macvlan container) | Colocated failure when a service runs on the bare host |
 | Step 5 (container → container, same host) | Colocated failure when both services are containerized |
-| Step 6 (shim fix) | Confirms macvlan isolation as root cause; validates Option 2 from the writeup |
-
-If Step 4 reproduces the hang but Step 5 succeeds, that tells you the real bug is specifically
-about a bare-host process (not a macvlan-attached container) trying to reach the macvlan
-network — which would point you toward `--network host` (Option 1) rather than the shim
-workaround, since Option 1 avoids putting either service behind the macvlan boundary at all.
-reproduce-macvlan-bug.md
-Displaying README.md.
+| Step 6 (shim fix) | Confirms macvlan isolation as root cause
