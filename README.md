@@ -1,11 +1,6 @@
 # macvlan Colocation Bug — Fix Demo (Ubuntu)
 
-Demonstrates the recommended fix (**Option 1** from the original writeup) for the
-colocated-machine failure: switch the colocated deployment from macvlan to Docker's
-**host networking mode** (`network_mode: host`). Host mode shares the container's network
-namespace directly with the host, so there's no virtual/macvlan boundary for host↔container
-or container↔container traffic to get stuck behind — which is exactly what breaks the
-handshake in the macvlan case when both services are colocated.
+Demonstrates the recommended fix for the colocated-machine failure: switch the colocated deployment from macvlan to Docker's **host networking mode** (`network_mode: host`). Host mode shares the container's network namespace directly with the host, so there's no virtual/macvlan boundary for host↔container or container↔container traffic to get stuck behind — which is exactly what breaks the handshake in the macvlan case when both services are colocated.
 
 This project uses two Compose **profiles** so you can run the broken version and the fixed
 version side-by-side with the same containers, same commands, same host — the only variable

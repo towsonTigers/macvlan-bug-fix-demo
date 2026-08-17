@@ -9,7 +9,29 @@ networks:
           gateway: ${GATEWAY}
 
 services:
-  # ---- BUGGY: macvlan network, fails when colocated on one host ----
+  macvlan-shim-setup:
+    profiles: ["macvlan-shim"]
+    image: alpine
+    container_name: macvlan-shim-setup
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    command: >
+      sh -c "
+        apk add --no-cache iproute2 || exit 1;
+        if ip link show macvlan-shim >/dev/null 2>&1; then
+          echo 'macvlan-shim already exists, skipping';
+        else
+          ip link add macvlan-shim link ${PARENT_IFACE} type macvlan mode bridge &&
+          ip addr add ${SUBNET} dev macvlan-shim &&
+          ip link set macvlan-shim up &&
+          ip route add ${GATEWAY} dev macvlan-shim &&
+          echo 'macvlan-shim created';
+        fi
+      "
+    restart: "no"
+
   server-macvlan:
     profiles: ["buggy"]
     build: .
@@ -29,26 +51,5 @@ services:
     networks:
       demo_macvlan:
         ipv4_address: ${CLIENT_IP}
-    tty: true
-    stdin_open: true
-
-  # ---- FIXED: host networking, works when colocated on one host ----
-  # network_mode: host shares the host's network namespace directly, so there's
-  # no virtual/macvlan boundary for host<->container traffic to get stuck behind.
-  server-host:
-    profiles: ["fixed"]
-    build: .
-    container_name: server-host
-    network_mode: host
-    command: ["-c", "nc -lk -p ${FIXED_PORT}"]
-    tty: true
-    stdin_open: true
-
-  client-host:
-    profiles: ["fixed"]
-    build: .
-    container_name: client-host
-    network_mode: host
-    command: ["-c", "sleep infinity"]
     tty: true
     stdin_open: true

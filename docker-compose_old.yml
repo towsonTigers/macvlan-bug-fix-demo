@@ -1,0 +1,54 @@
+networks:
+  demo_macvlan:
+    driver: macvlan
+    driver_opts:
+      parent: ${PARENT_IFACE}
+    ipam:
+      config:
+        - subnet: ${SUBNET}
+          gateway: ${GATEWAY}
+
+services:
+  # ---- BUGGY: macvlan network, fails when colocated on one host ----
+  server-macvlan:
+    profiles: ["buggy"]
+    build: .
+    container_name: server-macvlan
+    command: ["-c", "nc -lk -p 5000"]
+    networks:
+      demo_macvlan:
+        ipv4_address: ${SERVER_IP}
+    tty: true
+    stdin_open: true
+
+  client-macvlan:
+    profiles: ["buggy"]
+    build: .
+    container_name: client-macvlan
+    command: ["-c", "sleep infinity"]
+    networks:
+      demo_macvlan:
+        ipv4_address: ${CLIENT_IP}
+    tty: true
+    stdin_open: true
+
+  # ---- FIXED: host networking, works when colocated on one host ----
+  # network_mode: host shares the host's network namespace directly, so there's
+  # no virtual/macvlan boundary for host<->container traffic to get stuck behind.
+  server-host:
+    profiles: ["fixed"]
+    build: .
+    container_name: server-host
+    network_mode: host
+    command: ["-c", "nc -lk -p ${FIXED_PORT}"]
+    tty: true
+    stdin_open: true
+
+  client-host:
+    profiles: ["fixed"]
+    build: .
+    container_name: client-host
+    network_mode: host
+    command: ["-c", "sleep infinity"]
+    tty: true
+    stdin_open: true
